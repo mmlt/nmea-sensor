@@ -1,18 +1,24 @@
 import machine, network, usocket
 
-# The mDNS name of this device.
-HOSTNAME='nmea-sensor-motor'
 
 # The maximum number of failures before reconnecting to the WLAN. 
 MAX_CONSECUTIVE_SEND_FAILURES=3
 
 class connection:
     """
-    Connection can send data over TCP to a host in the WiFi network. 
+    Connection can send data over TCP to a host in the WiFi network
+    or receive data.
+    
+    :param ssid: Wifi network
+    :param key: Wifi network
+    :param hostname: mDNS name
+    :param ip: ip address to connect to or bind to (empty string bind to all interfaces)
+    :param port: port to connect to
     """
-    def __init__(self, ssid, key, ip, port):
+    def __init__(self, ssid, key, hostname, ip, port):
         self._ssid = ssid
         self._key = key
+        self._hostname = hostname
         self._ip = ip
         self._port = port
         self._wlan = network.WLAN(network.STA_IF)
@@ -32,7 +38,7 @@ class connection:
             ssid = net[0].decode()
             if ssid == self._ssid:
                 print('WLAN found')
-                self._wlan.config(dhcp_hostname=HOSTNAME)
+                self._wlan.config(dhcp_hostname=self._hostname)
                 self._wlan.connect(self._ssid, self._key)
                 while not self._wlan.isconnected():
                     machine.idle()
@@ -68,3 +74,11 @@ class connection:
             self._wlan.disconnect()
 
         return n == len(data)
+    
+    def listen(self):
+        s = usocket.socket(usocket.AF_INET, usocket.SOCK_STREAM)
+        s.bind((self._ip, self._port))
+        s.listen()
+        
+        return s
+    
