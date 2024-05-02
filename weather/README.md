@@ -2,6 +2,15 @@
 
 The weather sensor provides a HTTP endpoint to read NAVTEX and BME680 sensor data.
 
+`http://esp32-weather` 
+
+After reset main.py:
+- connects to WIFI
+- checks if the BME680 sensor is present
+- enters the main loop
+
+The main loop can be exited by a short (jumper) between P15 and GND.
+
 Sensors:
 - [BME680](https://www.bosch-sensortec.com/products/environmental-sensors/gas-sensors/bme680/) 
   sensor measuring relative humidity, barometric pressure, ambient temperature and gas over
@@ -30,17 +39,6 @@ WLAN_KEY="bar"
 # The mDNS name of this device.
 HOSTNAME="esp32-weather"
 ```
-
-
-# REPL
-
-After reset main.py:
-- connects to WIFI
-- checks if the BME680 sensor is present
-- enters the main loop
-
-The main loop can be exited by a short (jumper) between P15 and GND.
-
 
 
 # Misc
