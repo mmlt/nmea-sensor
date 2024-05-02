@@ -7,6 +7,10 @@ version = "v0.0.1"
 print(config.HOSTNAME, version)
 print("mem free: ", gc.mem_free())
 
+# Input to stop main loop and enter REPL
+# With jumper the pin is 0, without jumper the pin is 1
+p15 = machine.Pin(15, machine.Pin.IN, machine.Pin.PULL_UP)
+
 # WIFI connection
 connection = wifi.connection(config.WLAN_SSID, config.WLAN_KEY, config.HOSTNAME, '', 80)
 connection.wlan_connect()
@@ -22,9 +26,13 @@ uart = machine.UART(1, baudrate=9600, tx=33, rx=32)
 rtc = machine.RTC()
 
 # BME
-i2c = machine.I2C(0) # 0 scl=18 sda=19
-bme = bme680.BME680_I2C(i2c=i2c)
-
+bme_present = True
+try:
+    i2c = machine.I2C(0) # 0 scl=18 sda=19
+    bme = bme680.BME680_I2C(i2c=i2c)
+except OSError as e:
+    if e.errno == errno.ENODEV:
+        bme_present = False
 
 ### Web requests
 
@@ -91,7 +99,10 @@ def handle_reqresp(conn, request):
             navtex.send_to(conn)
         elif path == "/bme":
             resp_ok(conn)
-            bme680.send_to(conn, bme)
+            if bme_present:
+                bme680.send_to(conn, bme)
+            else:
+                conn.sendall("no sensor present")
         else:
             resp_notfound(conn)
     finally:
@@ -117,10 +128,10 @@ def navtex_test_tx_ch():
 
 ### Main
         
-while True:
+while p15.value():
     # Test data 
-    navtex_test_tx_ch()
-    navtex_test_tx_ch()
+    #navtex_test_tx_ch()
+    #navtex_test_tx_ch()
     
     # Read NAVTEX messages
     n = uart.any()
